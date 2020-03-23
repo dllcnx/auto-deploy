@@ -108,7 +108,7 @@ const uploadZipBySSH = async () =>{
   }
  
   const loading = ora( defaultLog('准备上传文件') ).start();
-  // loading.spinner = spinner_style.arrow4;
+  loading.spinner = spinner_style.arrow4;
   try {
     await SSH.putFiles([{ local: distZipPath, remote: config.PATH + '/dist-bundle.tar.gz' }]); //local 本地 ; remote 服务器 ;
     successLog('上传成功!'); 
