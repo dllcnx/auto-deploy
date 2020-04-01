@@ -32,9 +32,7 @@ npm run deploy
 
 ### 相关配置项
 
-- CLEAR_OLDFILES: 
-    
-    是否默认删除上传文件夹内容
+#### 必要配置
 - OUTPUT_PATH: 
     
     需要上传文件夹路径,默认dist
@@ -50,6 +48,19 @@ npm run deploy
 - PASSWORD: 
     
     如果密码登录,填入密码,并且不能设置PRIVATE_KEY参数
-- RENAME : 
+
+
+#### 扩展配置
+- CLEAR_OLDFILES: 
     
-    是否改名,是一个对象,参数为OLD_NAME和NEW_NAME
+    是否默认删除上传文件夹内容
+- RENAME: 
+    
+    是否改名,字符串,参数为是文件夹新名字
+- BACKUP:
+  
+    是否备份,默认false
+- EXTENDS
+ 
+    任务结束后,有时有的操作需要其他命令支持,可以使用扩展,填入自己要用的命令数组.例如:['cd demo', 'rm -rf *']
+    
