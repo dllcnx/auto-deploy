@@ -2,9 +2,8 @@
 
 ### 使用方法:
 
-1. 拉取代码
+1. `在自己项目根目录`拉取代码
 ```
-
 npx degit https://github.com/KeiferJu/auto-deploy.git deploy
 
 cd deploy
