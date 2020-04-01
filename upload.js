@@ -18,29 +18,15 @@ const errorLog = log => console.log(chalk.red(`---------------- ${log} ---------
 const successLog = log => console.log(chalk.green(`---------------- ${log} ----------------`));
 
 //文件夹目录
-// const distDir = path.resolve(__dirname, '../docs/__sapper__/export/smx-svelma'); //待打包
-const distZipPath = path.resolve(__dirname, `./dist-bundle.tar.gz`); //打包后地址(dist-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 PATH 即可)
+const distZipPath = path.resolve(__dirname, `./smx-bundle.tar.gz`); //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 PATH 即可)
 
 
-//项目打包代码 npm run build 
-const compileDist = async () => {
-  const loading = ora( defaultLog('项目开始打包') ).start();
-  loading.spinner = spinner_style.arrow4;
-  shell.cd(path.resolve(__dirname, '../'));
-  const res = await shell.exec('npm run build'); //执行shell 打包命令
-  loading.stop();
-  if(res.code === 0) {
-    successLog('项目打包成功!');
-  } else {
-    errorLog('项目打包失败, 请重试!');
-    process.exit(); //退出流程
-  }
-}
 
 //压缩代码
 const zipDist = async ()=>{
   const distDir = path.resolve(__dirname, '../'+config.OUTPUT_PATH); 
-  defaultLog('项目开始压缩');
+  const loading = ora( defaultLog('正在连接服务器') ).start();
+  loading.spinner = spinner_style.arrow4;
   try {
     await zipFile.tgz.compressDir(distDir, distZipPath)
     successLog('压缩成功!');
@@ -49,6 +35,7 @@ const zipDist = async ()=>{
     errorLog('压缩失败, 退出程序!');
     process.exit(); //退出流程
   }
+  loading.stop();
 }
 
 //连接服务器
@@ -80,23 +67,7 @@ const connectSSH = async ()=>{
   loading.stop();
 }
 
-//线上执行命令
-/**
- * 
- * @param {String} command 命令操作 如 ls
- */
-const runCommand = async (command)=> {
-  const result = await SSH.exec(command, [], { cwd: config.PATH})
-  // defaultLog(result);
-}
 
-//清空线上目标目录里的旧文件
-const clearOldFile = async () =>{
-  const commands = ['ls', 'rm -rf *'];
-  await Promise.all(commands.map(async (it)=>{
-    return await runCommand(it);
-  }));
-}
 
 //传送zip文件到服务器
 const uploadZipBySSH = async () =>{
@@ -110,15 +81,30 @@ const uploadZipBySSH = async () =>{
   const loading = ora( defaultLog('准备上传文件') ).start();
   loading.spinner = spinner_style.arrow4;
   try {
-    await SSH.putFiles([{ local: distZipPath, remote: config.PATH + '/dist-bundle.tar.gz' }]); //local 本地 ; remote 服务器 ;
+    await SSH.putFiles([{ local: distZipPath, remote: config.PATH + '/smx-bundle.tar.gz' }]); //local 本地 ; remote 服务器 ;
     successLog('上传成功!'); 
     loading.text = '正在解压文件';
-    await runCommand('tar -zxvf  ./dist-bundle.tar.gz'); //解压
-    await runCommand(`rm -rf ${config.PATH}/dist-bundle.tar.gz`); //解压完删除线上压缩包
+    await runCommand('tar -zxvf  ./smx-bundle.tar.gz'); //解压
+
+    // 是否备份文件
+    if(config.BACKUP){
+      await runCommand(`mv ${config.PATH}/smx-bundle.tar.gz ${config.PATH}/${config.OLD_NAME}.${new Date().toLocaleDateString()}.tar.gz`); //解压完删除线上压缩包
+    }else{
+      await runCommand(`rm -rf ${config.PATH}/smx-bundle.tar.gz`); //解压完删除线上压缩包
+    }
+    
+
     //将目标目录改名
     if(config.RENAME){
-      console.log(config.RENAME.OLD_NAME)
-      await runCommand(`mv ${config.PATH}/${config.RENAME.OLD_NAME}  ${config.PATH}/${config.RENAME.NEW_NAME}`); 
+      await runCommand(`mv ${config.PATH}/${config.OLD_NAME}  ${config.PATH}/${config.RENAME}`); 
+    }
+
+
+    // 后续扩展命令
+    if(config.EXTENDS){
+      for(let v of config.EXTENDS){
+          await runCommand(v)
+      }
     }
     
     SSH.dispose(); //断开连接
@@ -128,6 +114,15 @@ const uploadZipBySSH = async () =>{
     process.exit(); //退出流程
   }
   loading.stop();
+}
+
+
+//清空线上目标目录里的旧文件
+const clearOldFile = async () =>{
+  const commands = ['ls', 'rm -rf *'];
+  await Promise.all(commands.map(async (it)=>{
+    return await runCommand(it);
+  }));
 }
 
 // 删除本地上传后的打包文件
@@ -149,13 +144,27 @@ const deleteFile = function async() {
 
 
 
-//------------发布程序---------------
+/**
+ * 线上执行命令
+ * @param {String} command 命令操作 如 ls
+ */
+const runCommand = async (command)=> {
+  const result = await SSH.exec(command, [], { cwd: config.PATH})
+  // defaultLog(result);
+}
+
+
+
+
+
+
+
+//----------------------------------------发布程序---------------------------------------------------------//
 const runUploadTask = async () => {
   console.log(chalk.yellow(`--------->  欢迎使用 Sm@rtMapX前端组 自动部署工具  <---------`));
-  //打包
-  // await compileDist();
-  //压缩
+  //压缩代码
   await zipDist();
+
   //连接服务器上传文件
   await uploadZipBySSH(); 
 
@@ -175,7 +184,7 @@ const checkConfig = (conf) =>{
   const checkArr = Object.entries(conf);
   checkArr.map(it=>{
     const key = it[0];
-    if(key === 'PATH' && conf[key] === '/') { //上传zip前会清空目标目录内所有文件
+    if(key === 'PATH' && conf[key] === '/') { //上传压缩包前会清空目标目录内所有文件
       errorLog('PATH 不能是服务器根目录!'); 
       process.exit(); //退出流程
     }
@@ -185,6 +194,7 @@ const checkConfig = (conf) =>{
     }
   })
 }
+//--------------------------------------------------------------------------------------------------//
 
 // 执行交互后 启动发布程序
 inquirer
@@ -205,6 +215,15 @@ inquirer
     if(!config.OUTPUT_PATH){
       config.OUTPUT_PATH = 'dist';
     }
+
+    const names = config.OUTPUT_PATH.split('/');
+    if(names[names.length - 1]){
+      config.OLD_NAME = names[names.length - 1];
+    }else{
+      config.OLD_NAME = names[names.length - 2];
+    }
+    
+
     checkConfig(config); // 检查
     runUploadTask(); // 发布
   });

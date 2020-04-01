@@ -19,10 +19,19 @@ module.exports = Object.freeze({
   }
 })
 
-// CLEAR_OLDFILES: 是否默认删除上传文件夹内容
+/**
+ * 必要配置
+ */
 // OUTPUT_PATH: 需要上传文件夹路径,默认dist
 // SERVER_PATH: 服务器路径
 // SSH_USER: 服务器用户名
 // PRIVATE_KEY: 'C:/Users/Html5/.ssh/id_rsa'  用秘钥登录服务器(推荐)的秘钥地址, private 本机私钥文件地址(需要在服务器用户目录 一般是 /root/.ssh/authorized_keys 配置公钥 并该文件权限为 600, (.ssh文件夹一般默认隐藏)
 // PASSWORD: 密码
-// RENAME : 是否改名,是一个对象,参数为OLD_NAME和NEW_NAME
+
+/**
+ * 扩展配置
+ */
+// CLEAR_OLDFILES: 是否首先清空删除上传文件夹里面原有内容,慎用
+// RENAME : 是否改名,字符串,参数为是文件夹新名字
+// BACKUP: 是否备份,默认false
+// EXTENDS: 任务结束后,有时有的操作需要其他命令支持,可以使用扩展,填入自己要用的命令数组.例如:['cd demo', 'rm -rf *']
