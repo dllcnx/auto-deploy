@@ -25,7 +25,7 @@ const distZipPath = path.resolve(__dirname, `./smx-bundle.tar.gz`); //打包后�
 //压缩代码
 const zipDist = async () => {
   const distDir = path.resolve(__dirname, '../' + config.OUTPUT_PATH);
-  const loading = ora(defaultLog('正在连接服务器')).start();
+  const loading = ora(defaultLog('正在压缩代码')).start();
   loading.spinner = spinner_style.arrow4;
   try {
     await zipFile.tgz.compressDir(distDir, distZipPath)
