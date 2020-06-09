@@ -4,7 +4,7 @@ const spinner_style = require('./spinner_style') //加载动画样式
 const shell = require('shelljs') // 执行shell命令
 const node_ssh = require('node-ssh') // ssh连接服务器
 const inquirer = require('inquirer') //命令行交互
-const zipFile = require('compressing') // 压缩zip
+const zipFile = require('compressing2') // 压缩zip
 const fs = require('fs') // nodejs内置文件模块
 const path = require('path') // nodejs内置路径模块
 const CONFIG = require('./config') // 配置
@@ -48,12 +48,14 @@ const connectSSH = async () => {
       host: config.SERVER_PATH,
       username: config.SSH_USER,
       privateKey: config.PRIVATE_KEY, //秘钥登录(推荐) 方式一
-      tryKeyboard: true
+      tryKeyboard: true,
+      port: config.PORT
     } : {
       host: config.SERVER_PATH,
       username: config.SSH_USER,
       password: config.PASSWORD, // 密码登录 方式二
-      tryKeyboard: true
+      tryKeyboard: true,
+      port: config.PORT
     }
 
     await SSH.connect(options);
@@ -243,6 +245,10 @@ inquirer
       config = CONFIG[answers.env];
       if (!config.OUTPUT_PATH) {
         config.OUTPUT_PATH = 'dist';
+      }
+
+      if (!config.PORT) {
+        config.PORT = 22;
       }
 
       const names = config.OUTPUT_PATH.split('/');

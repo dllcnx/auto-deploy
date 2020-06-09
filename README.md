@@ -49,6 +49,9 @@ npm run deploy
     
     如果密码登录,填入密码,并且不能设置PRIVATE_KEY参数
 
+- PORT:
+    端口
+
 
 #### 扩展配置
 - CLEAR_OLDFILES: 
