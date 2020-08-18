@@ -1,7 +1,7 @@
 {
-  "name": "auto-deploy",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@dllcn/auto-deploy",
+  "version": "1.1.0",
+  "description": "自动部署脚本",
   "main": "upload.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,12 +17,12 @@
     "url": "https://github.com/KeiferJu/auto-deploy/issues"
   },
   "homepage": "https://github.com/KeiferJu/auto-deploy#readme",
-  "devDependencies": {
-    "chalk": "^3.0.0",
+  "dependencies": {
+    "chalk": "^4.0.0",
     "compressing2": "^1.5.1",
     "inquirer": "^7.1.0",
-    "node-ssh": "^8.0.0",
-    "ora": "^4.0.3",
-    "shelljs": "^0.8.3"
+    "node-ssh": "^10.0.2",
+    "ora": "^4.0.4",
+    "shelljs": "^0.8.4"
   }
 }
