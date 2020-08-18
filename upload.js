@@ -26,24 +26,28 @@ let config; // 用于保存 inquirer 命令行交互后选择正式|测试版的
 //logs
 const defaultLog = log => console.log(chalk.blue(`---------------- ${log} ----------------`));
 const errorLog = log => console.log(chalk.red(`---------------- ${log} ----------------`));
-const successLog = log => console.log(chalk.green(`---------------- ${log} ----------------`));
+const successLog = log => console.log(chalk.green(`---------------------- OK ----------------------`));
+const endLog = log => console.log(chalk.green(`--------------- ${log} ---------------`));
 
 //文件夹目录
 const distZipPath = path.resolve(__dirname, `${pathHierarchy}../smx-bundle.tar.gz`); //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 PATH 即可)
 
 
-//项目打包代码 npm run build
+/**
+ * 项目打包
+ * @returns {Promise<void>}
+ */
 const compileDist = async () => {
-    const loading = ora(defaultLog('项目开始打包')).start()
+    const loading = ora(defaultLog('正在进行项目打包')).start()
     loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
     shell.cd(path.resolve(__dirname, pathHierarchy))
     const res = await shell.exec(config.BUILD_SHELL) //执行shell 打包命令
     loading.stop()
     if (res.code === 0) {
-      successLog('项目打包成功!')
+        successLog();
     } else {
-      errorLog('项目打包失败, 请重试!')
-      process.exit() //退出流程
+        errorLog('项目打包失败, 请重试!')
+        process.exit() //退出流程
     }
 }
 
@@ -53,18 +57,20 @@ const compileDist = async () => {
  * @returns {Promise<void>}
  */
 const zipDist = async () => {
-    const loading = ora(defaultLog('正在压缩代码')).start();
+    const loading = ora(defaultLog('正在进行代码压缩')).start();
     loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
     try {
         const distDir = path.resolve(__dirname, `${pathHierarchy}${config.OUTPUT_PATH}`);
-        await zipFile.tgz.compressDir(distDir, distZipPath)
-        successLog('压缩成功!');
+        await zipFile.tgz.compressDir(distDir, distZipPath);
     } catch (error) {
+        loading.stop();
         errorLog(error);
         errorLog('压缩失败, 退出程序!');
         process.exit(); //退出流程
     }
+
     loading.stop();
+    successLog();
 }
 
 
@@ -89,13 +95,15 @@ const connectSSH = async () => {
 
     try {
         await SSH.connect(opt);
-        successLog('SSH连接成功!');
     } catch (error) {
+        loading.stop();
         errorLog(error);
         errorLog('SSH连接失败,请检查密码或者私钥以及网络状态!')
         process.exit(); //退出流程
     }
+
     loading.stop();
+    successLog();
 }
 
 
@@ -104,28 +112,43 @@ const connectSSH = async () => {
  * @returns {Promise<void>}
  */
 const clearOldFile = async () => {
+    const loading = ora(defaultLog('正在进行部署准备')).start();
+    loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
+
     try {
         await runCommand(`mkdir ${config.NAME}`);
-    } catch (e) {
-        // console.log(`检索到服务器存在${config.NAME}文件夹`);
-    }
+    } catch (e) {}
 
 
     if (config.BACKUP) {
-        const time = new Date().getTime();
         try {
+            loading.text = '正在进行备份';
+            const time = new Date().getTime();
             await runCommand(`tar -zcvf ${config.NAME}_${time}.tar.gz ${config.NAME}`);
-        } catch {
-            console.log('备份失败');
+            console.log('-ok!')
+        } catch (error) {
+            errorLog(error);
+            errorLog('备份失败!')
         }
     }
 
+    try {
+        loading.text = '正在回收部署目录';
+        const commands = [`cd ${config.NAME} && ls`, `cd ${config.NAME} && rm -rf *`];
+        await Promise.all(commands.map(async (it) => {
+            return await runCommand(it);
+        }));
+        console.log('-ok!')
+    } catch (e) {
+        loading.stop();
+        errorLog(error);
+        errorLog('回收部署目录失败!');
+        process.exit(); //退出流程
+    }
 
-    const commands = [`cd ${config.NAME} && ls`, `cd ${config.NAME} && rm -rf *`];
-    await Promise.all(commands.map(async (it) => {
-        return await runCommand(it);
-    }));
 
+    loading.stop();
+    successLog()
 }
 
 /**
@@ -134,16 +157,25 @@ const clearOldFile = async () => {
  */
 const uploadFiles = async () => {
     // 上传文件
-    const loading = ora(defaultLog('准备上传文件')).start();
+    const loading = ora(defaultLog('正在进行部署')).start();
     loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
     try {
+        loading.text = '正在进行代码上传';
         await SSH.putFiles([{
             local: distZipPath,
             remote: `${config.PATH}/${config.NAME}/smx-bundle.tar.gz`
         }]); //local 本地 ; remote 服务器 ;
-        successLog('上传成功!');
-        loading.text = '正在解压文件';
+        console.log('-ok!')
+    } catch (error) {
+        loading.stop();
+        errorLog(error);
+        errorLog('上传失败!');
+        process.exit(); //退出流程
+    }
 
+
+    try {
+        loading.text = '正在解压整理部署文件';
         await runCommand(`cd ${config.NAME} && tar -zxvf smx-bundle.tar.gz`); //解压
 
 
@@ -153,26 +185,32 @@ const uploadFiles = async () => {
         await runCommand(`mv -f ${config.PATH}/${config.NAME}/${config.OLD_NAME}/*  ${config.PATH}/${config.NAME}`)
         await runCommand(`rm -rf ${config.PATH}/${config.NAME}/${config.OLD_NAME}`) //移出后删除 dist 文件夹
 
-
-        // 后续扩展命令
-        if (config.EXTENDS) {
-            for (let v of config.EXTENDS) {
-                await runCommand(v)
-            }
-        }
-
-        SSH.dispose(); //断开连接
-    } catch (error) {
+        console.log('-ok!')
+    } catch (e) {
+        loading.stop();
         errorLog(error);
-        errorLog('上传失败!');
+        errorLog('解压整理出现异常!');
         process.exit(); //退出流程
     }
+
+
+    // 后续扩展命令
+    if (config.EXTENDS) {
+        for (let v of config.EXTENDS) {
+            await runCommand(v)
+        }
+    }
+
+    SSH.dispose(); //断开连接
     loading.stop();
+    successLog()
 }
 
 
 // 删除本地上传后的打包文件
 const deleteFile = async () => {
+    const loading = ora(defaultLog('正在进行后续处理')).start();
+    loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
     delPath = distZipPath;
     try {
         /**
@@ -183,9 +221,10 @@ const deleteFile = async () => {
         } else {
             console.log('inexistence path：', delPath);
         }
-    } catch (error) {
-        console.log('删除本地打包文件失败', error);
-    }
+    } catch (error) {}
+
+    loading.stop();
+    successLog()
 }
 
 
@@ -217,10 +256,10 @@ const uploadZipBySSH = async () => {
 
 //----------------------------------------发布程序---------------------------------------------------------//
 const runUploadTask = async () => {
-    console.log(chalk.yellow(`--------->  欢迎使用自动部署工具  <---------`));
+    console.log(chalk.yellow(`------------>  欢迎使用自动部署工具  <------------`));
 
     //打包
-    if(config.BUILD_SHELL){
+    if (config.BUILD_SHELL) {
         await compileDist()
     }
 
@@ -232,11 +271,11 @@ const runUploadTask = async () => {
 
     //删除本地打包文件
 
-    if(config.DELETE_LOCAL_PACKAGE){
+    if (config.DELETE_LOCAL_PACKAGE) {
         await deleteFile();
     }
 
-    successLog('大吉大利, 部署成功!');
+    endLog('大吉大利, 部署成功');
     process.exit();
 }
 
