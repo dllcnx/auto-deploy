@@ -1,4 +1,4 @@
-const pathHierarchy = '../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
+const pathHierarchy = '../../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
 
 const chalk = require('chalk') //命令行颜色
 const ora = require('ora') // 加载流程动画
@@ -29,7 +29,7 @@ const errorLog = log => console.log(chalk.red(`---------------- ${log} ---------
 const successLog = log => console.log(chalk.green(`---------------- ${log} ----------------`));
 
 //文件夹目录
-const distZipPath = path.resolve(__dirname, `${pathHierarchy}smx-bundle.tar.gz`); //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 PATH 即可)
+const distZipPath = path.resolve(__dirname, `${pathHierarchy}../smx-bundle.tar.gz`); //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 PATH 即可)
 
 
 //项目打包代码 npm run build

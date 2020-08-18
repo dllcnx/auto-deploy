@@ -1,6 +1,6 @@
 {
   "name": "@dllcn/auto-deploy",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "自动部署脚本",
   "main": "upload.js",
   "scripts": {
