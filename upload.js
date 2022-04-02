@@ -176,7 +176,7 @@ const uploadFiles = async () => {
 
     try {
         loading.text = '正在解压整理部署文件';
-        await runCommand(`cd ${config.NAME} && tar -zxvf smx-bundle.tar.gz`); //解压
+        await runCommand(`cd ${config.NAME} && tar -mzxvf smx-bundle.tar.gz`); //解压
 
 
         await runCommand(`rm -rf ${config.PATH}/${config.NAME}/smx-bundle.tar.gz`) //解压完删除线上压缩包
