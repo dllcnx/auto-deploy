@@ -4,7 +4,7 @@
   "description": "自动部署脚本",
   "main": "upload.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node upload.js"
   },
   "repository": {
     "type": "git",

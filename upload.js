@@ -9,17 +9,17 @@ const inquirer = require('inquirer') //命令行交互
 const zipFile = require('compressing2') // 压缩zip
 const fs = require('fs') // nodejs内置文件模块
 const path = require('path') // nodejs内置路径模块
-// const CONFIG = require('./config') // 配置
+const CONFIG = require('./config') // 配置
 
 const SSH = new node_ssh();
 
-let CONFIG
-try {
-    CONFIG = require(`${pathHierarchy}deploy.config.js`) // 项目配置
-} catch (error) {
-    errorLog('请在项目根目录添加 deploy.config.js 配置文件, 参考说明文档中的配置')
-    process.exit() //退出流程
-}
+// let CONFIG
+// try {
+//     CONFIG = require(`${pathHierarchy}deploy.config.js`) // 项目配置
+// } catch (error) {
+//     errorLog('请在项目根目录添加 deploy.config.js 配置文件, 参考说明文档中的配置')
+//     process.exit() //退出流程
+// }
 
 let config; // 用于保存 inquirer 命令行交互后选择正式|测试版的配置
 
@@ -139,7 +139,7 @@ const clearOldFile = async () => {
             return await runCommand(it);
         }));
         console.log('-ok!')
-    } catch (e) {
+    } catch (error) {
         loading.stop();
         errorLog(error);
         errorLog('回收部署目录失败!');
@@ -186,7 +186,7 @@ const uploadFiles = async () => {
         await runCommand(`rm -rf ${config.PATH}/${config.NAME}/${config.OLD_NAME}`) //移出后删除 dist 文件夹
 
         console.log('-ok!')
-    } catch (e) {
+    } catch (error) {
         loading.stop();
         errorLog(error);
         errorLog('解压整理出现异常!');
