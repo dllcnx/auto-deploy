@@ -9,17 +9,17 @@ const inquirer = require('inquirer') //命令行交互
 const zipFile = require('compressing2') // 压缩zip
 const fs = require('fs') // nodejs内置文件模块
 const path = require('path') // nodejs内置路径模块
-const CONFIG = require('./config') // 配置
+// const CONFIG = require('./config') // 配置
 
 const SSH = new node_ssh();
 
-// let CONFIG
-// try {
-//     CONFIG = require(`${pathHierarchy}deploy.config.js`) // 项目配置
-// } catch (error) {
-//     errorLog('请在项目根目录添加 deploy.config.js 配置文件, 参考说明文档中的配置')
-//     process.exit() //退出流程
-// }
+let CONFIG
+try {
+    CONFIG = require(`${pathHierarchy}deploy.config.js`) // 项目配置
+} catch (error) {
+    errorLog('请在项目根目录添加 deploy.config.js 配置文件, 参考说明文档中的配置')
+    process.exit() //退出流程
+}
 
 let config; // 用于保存 inquirer 命令行交互后选择正式|测试版的配置
 
