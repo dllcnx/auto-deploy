@@ -14,6 +14,8 @@ const endLog = log => console.log(chalk.green(`--------------- ${log} ----------
 const FtpDeploy = require('./ftp-deploy')
 const ftpDeploy = new FtpDeploy();
 
+let AesConfig = require('../utils/Base')
+let CryptoJS = require('../utils/crypto-js')
 
 let config; // 用于保存 inquirer 命令行交互后选择正式|测试版的配置
 let pathHierarchy; //测试目录
@@ -25,7 +27,7 @@ const runFtpTask = async (cf, pt) => {
     config = {
         user: cf.USER,
         // Password optional, prompted if none given
-        password: cf.PASSWORD,
+        password: decrypt(cf.PASSWORD),
         host: cf.SERVER_HOST,
         port: cf.PORT,
         localRoot: distDir,
@@ -38,7 +40,7 @@ const runFtpTask = async (cf, pt) => {
     }
 
     cf.LOADINGSTYLE ? config['LOADINGSTYLE'] = cf.LOADINGSTYLE : "";
-    
+
     console.log(chalk.yellow(`------------>  欢迎使用自动部署工具  <------------`));
     const loading = ora(defaultLog('正在进行文件上传')).start()
     loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
@@ -61,6 +63,20 @@ const runFtpTask = async (cf, pt) => {
 
 
 
+}
+
+
+function decrypt(data) {
+    const key = CryptoJS.enc.Utf8.parse(AesConfig.AES_KEY);
+    const iv = CryptoJS.enc.Utf8.parse(AesConfig.AES_IV);
+
+    const decrypted = CryptoJS.AES.decrypt(data, key, {
+        iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+    });
+    // console.log(decrypted);
+    return CryptoJS.enc.Utf8.stringify(decrypted).toString();
 }
 
 module.exports = runFtpTask;

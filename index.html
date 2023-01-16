@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="./utils/Base.js"></script>
+    <script src="./utils/crypto-js.js"></script>
+  </head>
+  <body>
+    请输入明文：<input id="pass" />
+    <button onclick="jm()">加密</button>
+    <script type="text/javascript">
+      const key = CryptoJS.enc.Utf8.parse(AesConfig.AES_KEY);
+      const iv = CryptoJS.enc.Utf8.parse(AesConfig.AES_IV);
+      function jm() {
+        // debugger;
+        let mm = document.getElementById("pass").value;
+        if (!mm) {
+          return;
+        }
+        let encrypted  = encrypt(mm);
+        alert(`您的密码为:${encrypted}`);
+      }
+
+      function encrypt(data) {
+        const srcs = CryptoJS.enc.Utf8.parse(data);
+        const encrypted = CryptoJS.AES.encrypt(srcs, key, {
+          iv,
+          mode: CryptoJS.mode.CBC,
+          padding: CryptoJS.pad.Pkcs7,
+        });
+        return encrypted.toString();
+      }
+    </script>
+  </body>
+</html>

@@ -14,7 +14,8 @@ let config; // 用于保存 inquirer 命令行交互后选择正式|测试版的
 let pathHierarchy; //测试目录
 let distZipPath; //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 REMOTE_ROOT 即可)//文件夹目录
 
-
+let AesConfig = require('../utils/Base')
+let CryptoJS = require('../utils/crypto-js')
 //logs
 const defaultLog = log => console.log(chalk.blue(`---------------- ${log} ----------------`));
 const errorLog = log => console.log(chalk.red(`---------------- ${log} ----------------`));
@@ -271,7 +272,7 @@ const runUploadTask = async (cf, pt) => {
     config = {
         SERVER_HOST: cf.SERVER_HOST,
         USER: cf.USER,
-        PASSWORD: cf.PASSWORD,
+        PASSWORD: decrypt(cf.PASSWORD),
         REMOTE_ROOT: cf.REMOTE_ROOT.substring(0, index),
         LOCAL_PATH: cf.LOCAL_PATH,
         OLD_NAME: cf.LOCAL_PATH.substring((l_index + 1), cf.LOCAL_PATH.length),
@@ -323,5 +324,18 @@ const runUploadTask = async (cf, pt) => {
     process.exit();
 }
 
+
+function decrypt(data) {
+    const key = CryptoJS.enc.Utf8.parse(AesConfig.AES_KEY);
+    const iv = CryptoJS.enc.Utf8.parse(AesConfig.AES_IV);
+
+    const decrypted = CryptoJS.AES.decrypt(data, key, {
+        iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+    });
+    // console.log(decrypted);
+    return CryptoJS.enc.Utf8.stringify(decrypted).toString();
+}
 
 module.exports = runUploadTask;
