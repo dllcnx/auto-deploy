@@ -1,27 +1,19 @@
-const pathHierarchy = '../../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
-
 const chalk = require('chalk') //命令行颜色
 const ora = require('ora') // 加载流程动画
-const spinner_style = require('./spinner_style') //加载动画样式
+const spinner_style = require('../spinner_style') //加载动画样式
 const shell = require('shelljs') // 执行shell命令
 const node_ssh = require('node-ssh') // ssh连接服务器
-const inquirer = require('inquirer') //命令行交互
+
 const zipFile = require('compressing2') // 压缩zip
 const fs = require('fs') // nodejs内置文件模块
 const path = require('path') // nodejs内置路径模块
-// const CONFIG = require('./config') // 配置
 
 const SSH = new node_ssh();
 
-let CONFIG
-try {
-    CONFIG = require(`${pathHierarchy}deploy.config.js`) // 项目配置
-} catch (error) {
-    errorLog('请在项目根目录添加 deploy.config.js 配置文件, 参考说明文档中的配置')
-    process.exit() //退出流程
-}
-
 let config; // 用于保存 inquirer 命令行交互后选择正式|测试版的配置
+let pathHierarchy; //测试目录
+let distZipPath; //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 REMOTE_ROOT 即可)//文件夹目录
+
 
 //logs
 const defaultLog = log => console.log(chalk.blue(`---------------- ${log} ----------------`));
@@ -29,8 +21,6 @@ const errorLog = log => console.log(chalk.red(`---------------- ${log} ---------
 const successLog = log => console.log(chalk.green(`---------------------- OK ----------------------`));
 const endLog = log => console.log(chalk.green(`--------------- ${log} ---------------`));
 
-//文件夹目录
-const distZipPath = path.resolve(__dirname, `${pathHierarchy}../smx-bundle.tar.gz`); //打包后地址(smx-bundle.tar.gz是文件名,不需要更改, 主要在config中配置 PATH 即可)
 
 
 /**
@@ -40,7 +30,7 @@ const distZipPath = path.resolve(__dirname, `${pathHierarchy}../smx-bundle.tar.g
 const compileDist = async () => {
     const loading = ora(defaultLog('正在进行项目打包')).start()
     loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
-    shell.cd(path.resolve(__dirname, pathHierarchy))
+    shell.cd(path.resolve(__dirname, `../${pathHierarchy}`))
     const res = await shell.exec(config.BUILD_SHELL) //执行shell 打包命令
     loading.stop()
     if (res.code === 0) {
@@ -60,7 +50,7 @@ const zipDist = async () => {
     const loading = ora(defaultLog('正在进行代码压缩')).start();
     loading.spinner = spinner_style[config.LOADINGSTYLE || 'arrow4']
     try {
-        const distDir = path.resolve(__dirname, `${pathHierarchy}${config.OUTPUT_PATH}`);
+        const distDir = path.resolve(__dirname, `../${pathHierarchy}${config.LOCAL_PATH}`);
         await zipFile.tgz.compressDir(distDir, distZipPath);
     } catch (error) {
         loading.stop();
@@ -86,8 +76,8 @@ const connectSSH = async () => {
     const type = config.PASSWORD ? 'password' : 'privateKey'
     const data = config.PASSWORD || config.PRIVATE_KEY
     const opt = {
-        host: config.SERVER_PATH,
-        username: config.SSH_USER,
+        host: config.SERVER_HOST,
+        username: config.USER,
         [type]: data,
         tryKeyboard: true,
         port: config.PORT
@@ -117,7 +107,14 @@ const clearOldFile = async () => {
 
     try {
         await runCommand(`mkdir ${config.NAME}`);
-    } catch (e) {}
+    } catch (e) {
+        if (e.message && e.message.indexOf('File exists') === -1) {
+            loading.stop();
+            errorLog(e);
+            errorLog('创建目录失败!');
+            process.exit(); //退出流程
+        }
+    }
 
 
     if (config.BACKUP) {
@@ -163,7 +160,7 @@ const uploadFiles = async () => {
         loading.text = '正在进行代码上传';
         await SSH.putFiles([{
             local: distZipPath,
-            remote: `${config.PATH}/${config.NAME}/smx-bundle.tar.gz`
+            remote: `${config.REMOTE_ROOT}/${config.NAME}/smx-bundle.tar.gz`
         }]); //local 本地 ; remote 服务器 ;
         console.log('-ok!')
     } catch (error) {
@@ -179,11 +176,11 @@ const uploadFiles = async () => {
         await runCommand(`cd ${config.NAME} && tar -mzxvf smx-bundle.tar.gz`); //解压
 
 
-        await runCommand(`rm -rf ${config.PATH}/${config.NAME}/smx-bundle.tar.gz`) //解压完删除线上压缩包
+        await runCommand(`rm -rf ${config.REMOTE_ROOT}/${config.NAME}/smx-bundle.tar.gz`) //解压完删除线上压缩包
         //
         // // 移除文件夹
-        await runCommand(`mv -f ${config.PATH}/${config.NAME}/${config.OLD_NAME}/*  ${config.PATH}/${config.NAME}`)
-        await runCommand(`rm -rf ${config.PATH}/${config.NAME}/${config.OLD_NAME}`) //移出后删除 dist 文件夹
+        await runCommand(`mv -f ${config.REMOTE_ROOT}/${config.NAME}/${config.OLD_NAME}/*  ${config.REMOTE_ROOT}/${config.NAME}`)
+        await runCommand(`rm -rf ${config.REMOTE_ROOT}/${config.NAME}/${config.OLD_NAME}`) //移出后删除 dist 文件夹
 
         console.log('-ok!')
     } catch (error) {
@@ -221,7 +218,7 @@ const deleteFile = async () => {
         } else {
             console.log('inexistence path：', delPath);
         }
-    } catch (error) {}
+    } catch (error) { }
 
     loading.stop();
     successLog()
@@ -234,7 +231,7 @@ const deleteFile = async () => {
  */
 const runCommand = async (command) => {
     const result = await SSH.exec(command, [], {
-        cwd: config.PATH
+        cwd: config.REMOTE_ROOT
     })
     // defaultLog(result);
 }
@@ -255,7 +252,52 @@ const uploadZipBySSH = async () => {
 
 
 //----------------------------------------发布程序---------------------------------------------------------//
-const runUploadTask = async () => {
+const runUploadTask = async (cf, pt) => {
+
+    if (cf.REMOTE_ROOT.substr(-1) === '\/') {
+        cf.REMOTE_ROOT = cf.REMOTE_ROOT.substring(0, cf.REMOTE_ROOT.length - 1)
+    }
+
+
+    if (cf.LOCAL_PATH.substr(-1) === '\/') {
+        cf.LOCAL_PATH = cf.LOCAL_PATH.substring(0, cf.LOCAL_PATH.length - 1)
+    }
+
+
+
+    let index = cf.REMOTE_ROOT.lastIndexOf("\/");  // 后面
+    let l_index = cf.LOCAL_PATH.lastIndexOf("\/");  // 后面
+
+    config = {
+        SERVER_HOST: cf.SERVER_HOST,
+        USER: cf.USER,
+        PASSWORD: cf.PASSWORD,
+        REMOTE_ROOT: cf.REMOTE_ROOT.substring(0, index),
+        LOCAL_PATH: cf.LOCAL_PATH,
+        OLD_NAME: cf.LOCAL_PATH.substring((l_index + 1), cf.LOCAL_PATH.length),
+        NAME: cf.REMOTE_ROOT.substring((index + 1), cf.REMOTE_ROOT.length),
+        PORT: cf.PORT
+    }
+
+
+
+
+    cf.LOADINGSTYLE ? config['LOADINGSTYLE'] = cf.LOADINGSTYLE : "";
+    cf.PRIVATE_KEY ? config['PRIVATE_KEY'] = cf.PRIVATE_KEY : "";
+    if (cf.SSH_CONFIG) {
+        cf.SSH_CONFIG.BUILD_SHELL ? config['BUILD_SHELL'] = cf.SSH_CONFIG.BUILD_SHELL : "";
+        cf.SSH_CONFIG.RENAME ? config['RENAME'] = cf.SSH_CONFIG.RENAME : "";
+        cf.SSH_CONFIG.BACKUP ? config['BACKUP'] = cf.SSH_CONFIG.BACKUP : "";
+        cf.SSH_CONFIG.EXTENDS ? config['EXTENDS'] = cf.SSH_CONFIG.EXTENDS : "";
+        cf.SSH_CONFIG.DELETE_LOCAL_PACKAGE ? config['DELETE_LOCAL_PACKAGE'] = cf.SSH_CONFIG.DELETE_LOCAL_PACKAGE : "";
+
+    }
+
+
+
+
+    pathHierarchy = pt;
+    distZipPath = path.resolve(__dirname, `../${pathHierarchy}/dllcnx-bundle.tar.gz`);
     console.log(chalk.yellow(`------------>  欢迎使用自动部署工具  <------------`));
 
     //打包
@@ -269,78 +311,17 @@ const runUploadTask = async () => {
     //连接服务器上传文件
     await uploadZipBySSH();
 
+
     //删除本地打包文件
 
     if (config.DELETE_LOCAL_PACKAGE) {
         await deleteFile();
     }
 
+
     endLog('大吉大利, 部署成功');
     process.exit();
 }
 
-// 开始前的配置检查
-/**
- *
- * @param {Object} conf 配置对象
- */
-const checkConfig = (conf) => {
-    const checkArr = Object.entries(conf);
-    checkArr.map(it => {
-        const key = it[0];
-        if (key === 'PATH' && conf[key] === '/') { //上传压缩包前会清空目标目录内所有文件
-            errorLog('PATH 不能是服务器根目录!');
-            process.exit(); //退出流程
-        }
-        if (!conf[key] && conf[key] !== false) {
-            errorLog(`配置项 ${key} 不能为空`);
-            process.exit(); //退出流程
-        }
-    })
-}
-//--------------------------------------------------------------------------------------------------//
 
-// 执行交互后 启动发布程序
-inquirer
-    .prompt([{
-        type: 'confirm',
-        message: '请确认您的上传目录(NAME)是没有部署或存储过其它重要的文件',
-        name: 'confirm',
-    }, {
-        type: 'list',
-        message: '选择您的部署环境',
-        name: 'env',
-        choices: [{
-            name: '测试环境',
-            value: 'development'
-        }, {
-            name: '正式环境',
-            value: 'production'
-        }],
-        when: function (answers) { // 当watch为true的时候才会提问当前问题
-            return answers.confirm
-        }
-    }])
-    .then(answers => {
-        if (answers.confirm) {
-            config = CONFIG[answers.env];
-            if (!config.OUTPUT_PATH) {
-                config.OUTPUT_PATH = 'dist';
-            }
-
-            if (!config.PORT) {
-                config.PORT = 22;
-            }
-
-            const names = config.OUTPUT_PATH.split('/');
-            if (names[names.length - 1]) {
-                config.OLD_NAME = names[names.length - 1];
-            } else {
-                config.OLD_NAME = names[names.length - 2];
-            }
-
-
-            checkConfig(config); // 检查
-            runUploadTask(); // 发布
-        }
-    });
+module.exports = runUploadTask;
