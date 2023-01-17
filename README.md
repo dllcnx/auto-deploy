@@ -7,17 +7,18 @@
 npm install @dllcn/auto-deploy -D
 ```
 
-2. 添加执行命令
+2. 在`package.json`的`scripts`添加执行命令
 ```
     "deploy": "node ./node_modules/@dllcnx/auto-deploy"
 ```
 
-3. 在项目根目录创建`deploy.config.js`文件:
+3. 在项目根目录创建`deploy.config.js`文件,可配置多个发布服务，例如以下配置了三个:
    
   ```javascript
   // 配置示例,具体配置看配置
   module.exports = Object.freeze({
-      development: {//ftp配置
+      ftp: {//ftp配置
+          NAME: "ftp发布",
           SERVER_HOST: 'xxx', // 服务器地址
           USER: 'root', // 用户名
           PASSWORD: 'xxx', //密码,需加密,加密页面参考下面链接
@@ -30,7 +31,22 @@ npm install @dllcn/auto-deploy -D
               ...
           }
       },
-      production: {//ssh
+      sftp: {//ftp配置
+          NAME: "sftp发布",
+          SERVER_HOST: 'xxx', // 服务器地址
+          USER: 'root', // 用户名
+          PASSWORD: 'xxx', //密码,需加密,加密页面参考下面链接
+          REMOTE_ROOT: '/web/test/', // 需要上传的服务器目录地址 如 /usr/local/nginx/html
+          LOCAL_PATH: "dist", // 需要上传文件夹路径,默认dist
+          PORT: 5521,
+          TYPE: "ftp",  // ftp,sftp,ssh 模认ssh
+          FTP_CONFIG:{
+              DELETE_REMOTE: true,
+              ...
+          }
+      },
+      ssh: {//ssh
+          NAME: "sftp发布",
           SERVER_HOST: 'xxx',
           USER: 'root',
           //方式一 用秘钥登录服务器(推荐), private 本机私钥文件地址(需要在服务器用户目录 一般是 /root/.ssh/authorized_keys 配置公钥 并该文件权限为 600, (.ssh文件夹一般默认隐藏)
@@ -49,9 +65,15 @@ npm install @dllcn/auto-deploy -D
   ```
 
 
+
+4. 执行`npm run deploy`发布命令
+
+![image-20230117231310216](https://dllcnx.com:10011/2023/01/202301172313308.png)
+
 ### 配置
 
 #### 基础配置
+- **name**:  配置名称，默认采用key值
 - **SERVER_HOST**:  服务器地址
 - **USER**: 服务器用户名
 - **PASSWORD**: 密码

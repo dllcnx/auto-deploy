@@ -1,13 +1,24 @@
-const pathHierarchy = '../../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
-// const pathHierarchy = './test/' //测试目录
+// const pathHierarchy = '../../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
+const pathHierarchy = './test/' //测试目录
 
 const inquirer = require('inquirer') //命令行交互
 const runUploadTask = require('./ssh/upload')
 const runFtpTask = require('./ftp/index')
 
 let DCONFIG;
+let choices = [];
 try {
     DCONFIG = require(`${pathHierarchy}deploy.config.js`) // 项目配置
+    // console.log(DCONFIG)
+    for (const key in DCONFIG) {
+        if (Object.hasOwnProperty.call(DCONFIG, key)) {
+            const element = DCONFIG[key].NAME || key;
+            choices.push({
+                name: element,
+                value: key
+            })
+        }
+    }
 } catch (error) {
     errorLog('请在项目根目录添加 deploy.config.js 配置文件, 参考说明文档中的配置')
     process.exit() //退出流程
@@ -50,13 +61,7 @@ inquirer
         type: 'list',
         message: '选择您的部署环境',
         name: 'env',
-        choices: [{
-            name: '测试环境',
-            value: 'development'
-        }, {
-            name: '正式环境',
-            value: 'production'
-        }],
+        choices: choices,
         when: function (answers) { // 当watch为true的时候才会提问当前问题
             return answers.confirm
         }
