@@ -1,5 +1,5 @@
-// const pathHierarchy = '../../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
-const pathHierarchy = './test/' //测试目录
+const pathHierarchy = '../../../' //脚本到项目的层级  项目/node_modules/deploy-node/index.js
+// const pathHierarchy = './test/' //测试目录
 
 const inquirer = require('inquirer') //命令行交互
 const runUploadTask = require('./ssh/upload')

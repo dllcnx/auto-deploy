@@ -1,6 +1,6 @@
 const chalk = require('chalk') //命令行颜色
 const ora = require('ora') // 加载流程动画
-const spinner_style = require('../spinner_style') //加载动画样式
+const spinner_style = require('../utils/spinner_style') //加载动画样式
 const shell = require('shelljs') // 执行shell命令
 const node_ssh = require('node-ssh') // ssh连接服务器
 
