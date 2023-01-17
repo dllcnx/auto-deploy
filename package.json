@@ -1,6 +1,6 @@
 {
   "name": "@dllcnx/auto-deploy",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "自动部署脚本",
   "main": "index.js",
   "scripts": {
