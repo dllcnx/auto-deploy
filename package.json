@@ -1,14 +1,17 @@
 {
-  "name": "@dllcn/auto-deploy",
+  "name": "@dllcnx/auto-deploy",
   "version": "2.0.0",
   "description": "自动部署脚本",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "publish": "npm publish"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KeiferJu/auto-deploy.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [],
   "author": "DLLCNX <dllcnx@foxmail.com> (myllcn.com)",
