@@ -4,7 +4,6 @@
   "description": "自动部署脚本",
   "main": "index.js",
   "scripts": {
-    "publish": "npm publish",
     "test": "node index.js"
   },
   "repository": {
