@@ -1,5 +1,7 @@
 ### 使用方法:
 
+原项目[@dllcn/auto-deploy](https://www.npmjs.com/package/@dllcn/auto-deploy)的升级版，原账号因为邮箱的问题无法接着迭代发布。
+
 1. 下载项目
 ```
 npm install @dllcn/auto-deploy -D
@@ -7,7 +9,7 @@ npm install @dllcn/auto-deploy -D
 
 2. 添加执行命令
 ```
-    "deploy": "node ./node_modules/@dllcn/auto-deploy"
+    "deploy": "node ./node_modules/@dllcnx/auto-deploy"
 ```
 
 3. 在项目根目录创建`deploy.config.js`文件:
