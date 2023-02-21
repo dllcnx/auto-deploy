@@ -27,7 +27,7 @@
     "compressing2": "^1.5.1",
     "inquirer": "^7.1.0",
     "minimatch": "5.0.1",
-    "node-ssh": "^10.0.2",
+    "node-ssh": "^13.0.1",
     "ora": "^4.0.4",
     "read": "^1.0.7",
     "shelljs": "^0.8.4",
