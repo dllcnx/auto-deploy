@@ -6,7 +6,7 @@ const events = require("events");
 const Promise = require("bluebird");
 const fs = require("fs");
 
-var PromiseFtp = require("promise-ftp");
+var PromiseFtp = require("@dllcnx/promise-ftp");
 var PromiseSftp = require("ssh2-sftp-client");
 const lib = require("./lib");
 
