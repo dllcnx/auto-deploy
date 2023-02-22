@@ -68,7 +68,7 @@ npm install @dllcnx/auto-deploy -D
 
 4. 执行`npm run deploy`发布命令
 
-![image-20230117231310216](https://dllcnx.com:10011/2023/01/202301172313308.png)
+![image-20230117231310216](https://dllcnx.com:15200/images/2023/01/202301172313308.png)
 
 ### 配置
 
