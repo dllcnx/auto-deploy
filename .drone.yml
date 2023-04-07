@@ -1,0 +1,30 @@
+# 项目的.drone.yml 文件
+kind: pipeline # 定义一个管道
+type: docker # 定义管道类型
+name: default # 定义管道名称
+ 
+
+volumes: 
+  - name: node_modules # 数据卷名称
+    # Host Volume, 挂载到宿主机上的卷轴
+    host: 
+      # 宿主机的绝对路径
+      path: /home/drone/cache/auto_deploy/node_modules
+
+
+steps:
+  - name: deploy-project
+    image: appleboy/drone-scp
+    settings:
+      host: 
+        from_secret: host
+      username:
+        from_secret: username
+      password: 
+        from_secret: password
+      port: 
+        from_secret: port
+      target: /docker/www/public/deploy
+      source: ./* 
+    when:
+      event: tag
