@@ -9,10 +9,41 @@ volumes:
     # Host Volume, 挂载到宿主机上的卷轴
     host: 
       # 宿主机的绝对路径
-      path: /home/drone/cache/auto_deploy/node_modules
+      path: /home/drone/cache/blog/node_modules
 
 
 steps:
+  - name: public-npm # 步骤名称
+    image: node:12.22.5 # 使用镜像和版本
+    environment:
+      NPM:
+        from_secret: npm
+    commands: 
+      - pwd # 查看当前目录 `/drone/src`
+      - ls -alt
+      - npm config set registry https://registry.npmjs.org # 切换官方仓库
+      - npm config set  -- $NPM  # 切换官方仓库
+      - npm publish --access public   # 发布
+    when:
+      event: tag
+
+  - name: public-dllcnx # 步骤名称
+    image: node:12.22.5 # 使用镜像和版本
+    environment:
+      DLLCNX_NPM:
+        from_secret: dllcnx_npm
+      DLLCNX_NPM_URL:
+        from_secret: dllcnx_npm_urls
+    commands: 
+      - pwd # 查看当前目录 `/drone/src`
+      - ls -alt
+      - npm config set registry $DLLCNX_NPM_URL # 切换私有仓库
+      - npm config set -- $DLLCNX_NPM
+     # 切换私有仓库
+      - npm publish # 发布
+    when:
+      event: tag
+
   - name: deploy-project
     image: appleboy/drone-scp
     settings:

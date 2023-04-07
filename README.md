@@ -108,5 +108,5 @@ npm install @dllcnx/auto-deploy -D
 
 ### 加密页面
 
-[在线加密页面](http://dllcnx.com:15200/DeployAes/index.html)或者直接访问项目根目录单页面，加密目前只是简单混淆，防止密码明文直接暴漏到配置文件，但是会查看源码依旧存在暴漏风险，所以建议ssh的key模式授权登录。
+[在线加密页面](https://dllcnx.com:18999/deploy/index.html)或者直接访问项目根目录单页面，加密目前只是简单混淆，防止密码明文直接暴漏到配置文件，但是会查看源码依旧存在暴漏风险，所以建议ssh的key模式授权登录。
 
