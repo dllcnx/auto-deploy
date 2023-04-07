@@ -5,19 +5,19 @@ name: default # 定义管道名称
 
 
 steps:
-  # - name: public-npm # 步骤名称
-  #   image: node:12.22.5 # 使用镜像和版本
-  #   environment:
-  #     NPM:
-  #       from_secret: npm
-  #   commands: 
-  #     - pwd # 查看当前目录 `/drone/src`
-  #     - ls -alt
-  #     - npm config set registry https://registry.npmjs.org # 切换官方仓库
-  #     - npm config set -- $NPM  # 切换官方仓库
-  #     - npm publish --access public   # 发布
-  #   when:
-  #     event: tag
+  - name: public-npm # 步骤名称
+    image: node:12.22.5 # 使用镜像和版本
+    environment:
+      NPM:
+        from_secret: npm
+    commands: 
+      - pwd # 查看当前目录 `/drone/src`
+      - ls -alt
+      - npm config set registry https://registry.npmjs.org # 切换官方仓库
+      - npm config set -- '//registry.npmjs.org/:_authToken' $NPM  # 切换官方仓库
+      - npm publish --access public   # 发布
+    when:
+      event: tag
 
   - name: public-dllcnx # 步骤名称
     image: node:12.22.5 # 使用镜像和版本
@@ -31,8 +31,8 @@ steps:
     environment:
       DLLCNX_NPM:
           from_secret: dllcnx_npm
-    # when:
-    #   event: tag
+    when:
+      event: tag
 
   - name: deploy-project
     image: appleboy/drone-scp
@@ -46,6 +46,6 @@ steps:
       port: 
         from_secret: port
       target: /docker/www/public/deploy
-      source: ./* 
+      source: ./index.html
     when:
       event: tag
