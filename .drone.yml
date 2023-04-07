@@ -21,11 +21,6 @@ steps:
 
   - name: public-dllcnx # 步骤名称
     image: node:12.22.5 # 使用镜像和版本
-    environment:
-      DLLCNX_NPM:
-        from_secret: dllcnx_npm
-      DLLCNX_NPM_URL:
-        from_secret: dllcnx_npm_urls
     commands: 
       - pwd # 查看当前目录 `/drone/src`
       - ls -alt
@@ -33,6 +28,11 @@ steps:
       - npm config set -- $DLLCNX_NPM
      # 切换私有仓库
       - npm publish # 发布
+    environment:
+      DLLCNX_NPM:
+          from_secret: dllcnx_npm
+      DLLCNX_NPM_URL:
+          from_secret: dllcnx_npm_url
     # when:
     #   event: tag
 
