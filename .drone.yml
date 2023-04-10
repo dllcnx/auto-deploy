@@ -38,13 +38,13 @@ steps:
     image: appleboy/drone-scp
     settings:
       host: 
-        from_secret: host
+        from_secret: uhost
       username:
-        from_secret: username
+        from_secret: uusername
       password: 
-        from_secret: password
+        from_secret: upassword
       port: 
-        from_secret: port
+        from_secret: uport
       target: /docker/www/public/deploy
       source: ./index.html
     when:
