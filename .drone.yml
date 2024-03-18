@@ -24,8 +24,8 @@ steps:
     commands: 
       - pwd # 查看当前目录 `/drone/src`
       - ls -alt
-      - npm config set registry https://dllcnx.com:30000/api/packages/dllcnx.github/npm/ # 切换私有仓库
-      - npm config set -- '//dllcnx.com:30000/api/packages/dllcnx.github/npm/:_authToken' $DLLCNX_NPM
+      - npm config set registry https://gitea.dllcnx.com/api/packages/dllcnx.github/npm/ # 切换私有仓库
+      - npm config set -- '//gitea.dllcnx.com/api/packages/dllcnx.github/npm/:_authToken' $DLLCNX_NPM
      # 切换私有仓库
       - npm publish # 发布
     environment:
